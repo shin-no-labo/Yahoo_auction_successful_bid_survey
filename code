@@ -1,0 +1,67 @@
+from bs4 import BeautifulSoup
+import requests
+import pandas as pd
+
+#ヤフオクの落札履歴データベースから、'ジョニーウォーカー + 黒 + 特級'で検索したページより、スクレイピングする。
+url ='https://auctions.yahoo.co.jp/closedsearch/closedsearch?p=%E3%82%B8%E3%83%A7%E3%83%8B%E3%83%BC%E3%82%A6%E3%82%A9%E3%83%BC%E3%82%AB%E3%83%BC+%E9%BB%92+%E7%89%B9%E7%B4%9A&va=%E3%82%B8%E3%83%A7%E3%83%8B%E3%83%BC%E3%82%A6%E3%82%A9%E3%83%BC%E3%82%AB%E3%83%BC+%E9%BB%92+%E7%89%B9%E7%B4%9A&b=1&n=100'
+result = requests.get(url)
+
+soup = BeautifulSoup(result.text, 'html.parser')
+
+#出品している件名と、落札価格を、スクレ―ピングする。
+#スクレ―ピングしたリストを確認して、求めている年代のウイスキ―サンプルを抽出する。
+name_html_list = soup.find_all('a', class_='Product__titleLink') 
+price_html_list = soup.find_all('span',class_='Product__priceValue')
+
+
+
+data = pd.DataFrame(columns=['price'])
+
+for i,j in zip(name_html_list,price_html_list):
+    price = j.get_text()
+    price = price.strip('円')
+    price = int(price.replace(',','')) 
+    temp = pd.Series([price],index =data.columns, name = i.get_text())
+    data= data.append(temp)
+
+
+#欲しい年代のボトルは、760ml。このため、件名に760ｍｌが入っているもののみをスクリーニングする。
+filter2 = '760'
+data_2 = data[data.index.str.contains(filter2)]
+
+
+#複数のボトルがセットになっている出品があるため、おおよそ一本あたりの相場でスクリーニングする。
+data_2 = data_2[data_2['price'] <=5000]
+
+print('水準1:',filter2)
+print('平均値±不偏標準偏差(S):',int(data_2.mean()) - int(data_2.std()), '～',int(data_2.mean()), '～' ,int(data_2.mean()) + int(data_2.std()) )
+print('サンプル数:',int(data_2.count()))
+print('平均値:', int(data_2.mean()))
+print('不偏標準偏差S:',int(data_2.std()))
+print('中央値:', int(data_2.median()))
+print('最高値:',int(data_2.max()))
+print('最安値:', int(data_2.min()))
+
+
+filter3 = '750'
+data_3 = data[data.index.str.contains(filter3)]
+data_3 = data_3[data_3['price'] <=3000]
+
+
+print('\n')
+print('水準2:',filter3)
+print('平均値±不偏標準偏差(S):',int(data_3.mean()) - int(data_3.std()), '～',int(data_3.mean()), '～' ,int(data_3.mean()) + int(data_3.std()) )
+print('サンプル数:',int(data_3.count()))
+print('平均値:', int(data_3.mean()))
+print('不偏標準偏差S:',int(data_3.std()))
+print('中央値:', int(data_3.median()))
+print('最高値:',int(data_3.max()))
+print('最安値:', int(data_3.min()))
+
+
+#結果をエクセルファイルに出力する。
+with pd.ExcelWriter('whisky-walker.xlsx') as writer:
+    data.to_excel(writer,sheet_name = 'all-items') 
+    data_2.to_excel(writer,sheet_name = '760ml')
+    data_3.to_excel(writer,sheet_name = '750ml')
+
