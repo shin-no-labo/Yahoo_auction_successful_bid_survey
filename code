@@ -29,9 +29,13 @@ for i,j in zip(name_html_list,price_html_list):
 filter2 = '760'
 data_2 = data[data.index.str.contains(filter2)]
 
-
 #複数のボトルがセットになっている出品があるため、おおよそ一本あたりの相場でスクリーニングする。
 data_2 = data_2[data_2['price'] <=5000]
+
+filter3 = '750'
+data_3 = data[data.index.str.contains(filter3)]
+data_3 = data_3[data_3['price'] <=3000]
+
 
 print('水準1:',filter2)
 print('平均値:', int(data_2.mean()))
@@ -39,11 +43,6 @@ print('中央値:', int(data_2.median()))
 print('最高値:',int(data_2.max()))
 print('最安値:', int(data_2.min()))
 print('不偏標準偏差S:',int(data_2.std()))
-
-filter3 = '750'
-data_3 = data[data.index.str.contains(filter3)]
-data_3 = data_3[data_3['price'] <=3000]
-
 
 print('\n')
 print('水準2:',filter3)
